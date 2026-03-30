@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Lightworkers" />
+  <title>Lightworkers</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    html,body{height:100%;background:#F5F0E8;font-family:'Sora',sans-serif}
+    #app{max-width:440px;margin:0 auto;min-height:100vh;position:relative}
+    @keyframes slideUp{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    @keyframes toastIn{from{transform:translateY(14px) translateX(-50%);opacity:0}to{transform:translateY(0) translateX(-50%);opacity:1}}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .screen{padding:22px 18px 56px;animation:fadeIn 0.2s ease}
+    .screen.slide{animation:slideUp 0.22s ease}
+    .tap{cursor:pointer;transition:transform 0.1s,opacity 0.1s}
+    .tap:active{transform:scale(0.94);opacity:0.7}
+    #loading{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:14px}
+    .spinner{width:28px;height:28px;border:3px solid #D4C8B0;border-top-color:#2D5016;border-radius:50%;animation:spin 0.7s linear infinite}
+    .load-txt{font-size:13px;color:#9A8C7C}
+    #toast{display:none;position:fixed;bottom:30px;left:50%;transform:translateX(-50%);color:#FFF;padding:10px 22px;border-radius:100px;font-weight:600;font-size:14px;z-index:999;white-space:nowrap;animation:toastIn 0.2s ease;pointer-events:none}
+    .app-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
+    .app-name{font-size:24px;font-weight:700;color:#1A1A1A;letter-spacing:-0.5px}
+    .live-date{font-size:12px;color:#9A8C7C;margin-top:3px}
+    .bal-card{background:#2D5016;border-radius:20px;padding:20px;margin-bottom:16px;color:#FFF}
+    .bal-row{display:flex;justify-content:space-between;align-items:flex-start}
+    .bal-label{font-size:11px;opacity:.65;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+    .bal-amount{font-size:36px;font-weight:700;letter-spacing:-1px;font-family:'DM Mono',monospace}
+    .bal-sub{font-size:11px;opacity:.55;margin-top:7px}
+    .today-box{background:rgba(255,255,255,.13);border-radius:14px;padding:10px 14px;text-align:right;min-width:90px}
+    .tb-lbl{font-size:10px;opacity:.65;letter-spacing:1px;text-transform:uppercase}
+    .tb-amt{font-size:22px;font-weight:700;font-family:'DM Mono',monospace;margin-top:2px}
+    .tb-sub{font-size:10px;opacity:.6;margin-top:3px}
+    .action-row{display:flex;gap:10px;margin-bottom:22px}
+    .log-btn{flex:2;background:#F0E8D5;border:2px dashed #C4B89A;border-radius:16px;padding:16px;display:flex;align-items:center;justify-content:center;gap:10px;font-size:16px;font-weight:600;color:#5A4E3C;font-family:'Sora',sans-serif}
+    .cash-add-btn{flex:1;background:#EDF4E7;border:2px dashed #8FBD74;border-radius:16px;padding:16px 10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:13px;font-weight:600;color:#2D5016;font-family:'Sora',sans-serif}
+    .sec-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+    .sec-title{font-size:11px;font-weight:600;color:#9A8C7C;text-transform:uppercase;letter-spacing:1.2px}
+    .see-all{background:none;border:none;color:#2D5016;font-size:13px;font-family:'Sora',sans-serif;font-weight:500;cursor:pointer}
+    .cash-toggle{display:flex;align-items:center;justify-content:space-between;background:#EDF4E7;border-radius:12px;padding:10px 14px;margin-bottom:10px;cursor:pointer;border:1.5px solid #B8D9A0}
+    .cash-toggle-left{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#2D5016}
+    .cash-arrow{font-size:11px;color:#6A8C5A;transition:transform 0.2s;display:inline-block}
+    .cash-arrow.open{transform:rotate(180deg)}
+    .empty{text-align:center;color:#A0927C;font-size:14px;padding:30px 20px;line-height:2}
+    .entry-row{display:flex;align-items:center;gap:12px;background:#FFF;border-radius:14px;padding:12px 14px;margin-bottom:8px;transition:background 0.15s}
+    .entry-row:hover{background:#EDE8DE}
+    .entry-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .entry-icon img{width:28px;height:28px;object-fit:contain;border-radius:6px}
+    .entry-info{flex:1;min-width:0}
+    .entry-name{font-size:14px;font-weight:600;color:#1A1A1A}
+    .entry-meta{font-size:11px;color:#9A8C7C;margin-top:2px}
+    .entry-edited{font-size:10px;color:#B8A898;margin-top:2px;font-style:italic}
+    .entry-amt{font-size:15px;font-weight:700;color:#2D5016;font-family:'DM Mono',monospace;white-space:nowrap}
+    .edit-btn{background:#EDF4E7;border:none;color:#2D5016;width:30px;height:30px;border-radius:8px;font-size:13px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+    .cash-row{display:flex;align-items:center;gap:12px;background:#EDF4E7;border-radius:14px;padding:12px 14px;margin-bottom:8px;border:1.5px solid #B8D9A0}
+    .cash-row-icon{width:44px;height:44px;border-radius:12px;background:#2D5016;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+    .cash-row-info{flex:1}
+    .cash-row-label{font-size:14px;font-weight:600;color:#2D5016}
+    .cash-row-meta{font-size:11px;color:#6A8C5A;margin-top:2px}
+    .cash-row-right{display:flex;align-items:center;gap:8px}
+    .cash-row-amt{font-size:15px;font-weight:700;color:#2D5016;font-family:'DM Mono',monospace;white-space:nowrap}
+    .cash-row-amt::before{content:"+"}
+    .del-cash-btn{background:#FFF0EE;border:none;color:#C0392B;width:28px;height:28px;border-radius:8px;font-size:11px;cursor:pointer;flex-shrink:0}
+    .add-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:26px}
+    .back-btn{background:none;border:none;color:#5A4E3C;font-size:15px;font-family:'Sora',sans-serif;font-weight:500;cursor:pointer}
+    .step-dots{display:flex;gap:6px}
+    .step-dot{width:8px;height:8px;border-radius:50%;background:#D4C8B0;transition:background 0.2s}
+    .step-dot.active{background:#2D5016}
+    .time-pill{background:#EDF4E7;color:#2D5016;padding:4px 10px;border-radius:100px;font-size:12px;font-weight:600;font-family:'DM Mono',monospace}
+    .step-title{font-size:22px;font-weight:700;color:#1A1A1A;margin-bottom:18px;letter-spacing:-0.3px}
+    .plat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:10px}
+    .plat-btn{border:1.5px solid #E5E7EB;border-radius:16px;padding:14px 10px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+    .plat-btn:active{transform:scale(0.97)}
+    .plat-btn img{width:50px;height:50px;object-fit:contain;border-radius:10px}
+    .plat-label{font-size:13px;font-weight:500;color:#444}
+    .recap{display:flex;align-items:center;gap:8px;background:#EDF4E7;border-radius:10px;padding:8px 12px;margin-bottom:16px;font-size:13px;flex-wrap:wrap}
+    .recap img{width:20px;height:20px;object-fit:contain;border-radius:4px}
+    .recap-name{font-weight:600;color:#2D5016}
+    .recap-sep{color:#9A8C7C}
+    .recap-amt{font-weight:700;color:#1A1A1A;font-family:'DM Mono',monospace}
+    .orig-card{background:#FFF;border-radius:14px;padding:14px;margin-bottom:18px;border:1.5px solid #E0D8CC}
+    .orig-row{display:flex;align-items:center;gap:10px}
+    .orig-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .orig-icon img{width:22px;height:22px;object-fit:contain}
+    .orig-info{flex:1}
+    .orig-name{font-size:13px;font-weight:600;color:#1A1A1A}
+    .orig-meta{font-size:11px;color:#9A8C7C;margin-top:2px}
+    .orig-amt{font-size:14px;font-weight:700;color:#9A8C7C;font-family:'DM Mono',monospace;text-decoration:line-through}
+    .amt-disp{font-size:52px;font-weight:700;color:#1A1A1A;font-family:'DM Mono',monospace;text-align:center;padding:14px 0;letter-spacing:-1px;min-height:84px;display:flex;align-items:center;justify-content:center}
+    .amt-ph{opacity:.2}
+    .numpad{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+    .num-btn{background:#FFF;border:none;border-radius:14px;height:60px;font-size:22px;font-weight:500;color:#1A1A1A;font-family:'DM Mono',monospace}
+    .next-btn{width:100%;background:#2D5016;color:#FFF;border:none;border-radius:14px;padding:15px;font-size:16px;font-weight:600;font-family:'Sora',sans-serif}
+    .next-btn:disabled{opacity:.35}
+    .mem-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+    .mem-btn{border:1.5px solid #D4C8B0;border-radius:14px;padding:14px 12px;font-size:15px;font-weight:600;font-family:'Sora',sans-serif;background:#FFF;color:#2D2D2D}
+    .mem-btn.selected{background:#2D5016;color:#FFF;border-color:#2D5016}
+    .auto-note{background:#F0EEE8;border-radius:12px;padding:10px 14px;font-size:13px;color:#7A6E5E;margin-bottom:14px;text-align:center}
+    .confirm-btn{width:100%;background:#2D5016;color:#FFF;border:none;border-radius:14px;padding:15px;font-size:16px;font-weight:600;font-family:'Sora',sans-serif}
+    .confirm-btn:disabled{opacity:.35}
+    .save-edit-btn{width:100%;background:#2D5016;color:#FFF;border:none;border-radius:14px;padding:15px;font-size:16px;font-weight:600;font-family:'Sora',sans-serif;margin-bottom:10px}
+    .save-edit-btn:disabled{opacity:.35}
+    .delete-entry-btn{width:100%;background:#FFF0EE;border:1.5px solid #FFCDD2;border-radius:14px;padding:14px;color:#C0392B;font-size:15px;font-weight:600;font-family:'Sora',sans-serif}
+    .edited-by-lbl{font-size:13px;font-weight:600;color:#5A4E3C;margin-bottom:10px;margin-top:18px}
+    .confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:flex;align-items:flex-end;justify-content:center;animation:fadeIn 0.15s ease}
+    .confirm-sheet{background:#FFF;border-radius:24px 24px 0 0;padding:24px 20px 40px;width:100%;max-width:440px;animation:slideUp 0.2s ease}
+    .confirm-sheet-title{font-size:18px;font-weight:700;color:#1A1A1A;margin-bottom:8px}
+    .confirm-sheet-sub{font-size:14px;color:#9A8C7C;margin-bottom:24px;line-height:1.6}
+    .confirm-sheet-btns{display:flex;gap:10px}
+    .confirm-no{flex:1;background:#F0EEE8;border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:600;color:#5A4E3C;font-family:'Sora',sans-serif}
+    .confirm-yes{flex:1;background:#C0392B;border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:600;color:#FFF;font-family:'Sora',sans-serif}
+    .other-subtitle{font-size:14px;color:#9A8C7C;margin-bottom:20px;line-height:1.6}
+    .other-input{width:100%;border:1.5px solid #C4B89A;border-radius:14px;padding:16px;font-size:18px;font-family:'Sora',sans-serif;background:#FFF;color:#1A1A1A;outline:none;margin-bottom:16px}
+    .other-input:focus{border-color:#2D5016}
+    .suggestions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+    .sugg-chip{border:1.5px solid #D4C8B0;border-radius:100px;padding:7px 14px;font-size:13px;font-weight:500;font-family:'Sora',sans-serif;background:#FFF;color:#5A4E3C}
+    .sugg-chip.active{background:#2D5016;color:#FFF;border-color:#2D5016}
+    .log-title{font-size:16px;font-weight:600;color:#1A1A1A}
+    .date-row{display:flex;justify-content:space-between;align-items:center;padding:14px 4px 6px}
+    .date-lbl{font-size:11px;font-weight:600;color:#9A8C7C;text-transform:uppercase;letter-spacing:1.2px}
+    .date-tot{font-size:13px;font-weight:700;color:#2D5016;font-family:'DM Mono',monospace}
+    .set-section{margin-bottom:26px}
+    .set-lbl{font-size:11px;font-weight:600;color:#9A8C7C;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+    .set-row{display:flex;gap:8px}
+    .set-input{flex:1;border:1.5px solid #D4C8B0;border-radius:12px;padding:10px 14px;font-size:15px;font-family:'Sora',sans-serif;background:#FFF;color:#1A1A1A;outline:none}
+    .set-input:focus{border-color:#2D5016}
+    .set-save{background:#2D5016;color:#FFF;border:none;border-radius:12px;padding:0 16px;font-size:14px;font-weight:600;font-family:'Sora',sans-serif}
+    .mem-tag{display:inline-flex;align-items:center;gap:8px;background:#FFF;border:1.5px solid #D4C8B0;border-radius:100px;padding:6px 12px;font-size:14px;color:#1A1A1A;margin-right:8px;margin-bottom:8px}
+    .rem-mem{background:none;border:none;color:#A0927C;cursor:pointer;font-size:12px}
+    .danger-btn{width:100%;background:#FFF0EE;border:1.5px solid #FFCDD2;border-radius:14px;padding:14px;color:#C0392B;font-size:14px;font-weight:600;font-family:'Sora',sans-serif;margin-bottom:16px}
+    .shared-note{text-align:center;font-size:12px;color:#A0927C;padding:8px 0;line-height:1.6}
+    .cash-screen-note{font-size:14px;color:#6A8C5A;background:#EDF4E7;border-radius:12px;padding:12px 14px;margin-bottom:20px;line-height:1.6}
+    .icon-btn{background:#FFF;border:1.5px solid #E0D8CC;border-radius:12px;width:40px;height:40px;font-size:18px;color:#5A4E3C;display:flex;align-items:center;justify-content:center}
+  </style>
+</head>
+<body>
+<div id="app">
+  <div id="loading"><div class="spinner"></div><div class="load-txt">Loading Cash Box…</div></div>
+  <div id="toast"></div>
+</div>
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import{getDatabase,ref,onValue,set,remove}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const firebaseConfig={
+  apiKey:"AIzaSyCNTXXYTw44PLexsAXMpYp1emGjjHRSvlM",
+  authDomain:"gmcks-cashbox.firebaseapp.com",
+  databaseURL:"https://gmcks-cashbox-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"gmcks-cashbox",
+  storageBucket:"gmcks-cashbox.firebasestorage.app",
+  messagingSenderId:"1026064896962",
+  appId:"1:1026064896962:web:e315c2d4c3c097edce3c5b"
+};
+
+const START_BAL=0;
+const DEFAULT_MEMBERS=["Sneha"];
+
+const PLATFORMS=[
+  {id:"amazon",    label:"Amazon",    logo:"logos/amazon.png",    bg:"#FFF3E0",emoji:"📦"},
+  {id:"myntra",    label:"Myntra",    logo:"logos/myntra.png",    bg:"#FFF0F3",emoji:"👗"},
+  {id:"flipkart",  label:"Flipkart",  logo:"logos/flipkart.png",  bg:"#EEF4FF",emoji:"🛒"},
+  {id:"zepto",     label:"Zepto",     logo:"logos/zepto.png",     bg:"#F5EEFF",emoji:"⚡"},
+  {id:"blinkit",   label:"Blinkit",   logo:"logos/blinkit.png",   bg:"#FFFDE7",emoji:"🟡"},
+  {id:"swiggy",    label:"Swiggy",    logo:"logos/swiggy.png",    bg:"#FFF3EB",emoji:"🍜"},
+  {id:"bigbasket", label:"BigBasket", logo:"logos/bigbasket.png", bg:"#F2FAEB",emoji:"🧺"},
+  {id:"zomato",    label:"Zomato",    logo:"logos/zomato.png",    bg:"#FFF0F1",emoji:"🍽️"},
+  {id:"apollo",    label:"Apollo",    logo:"logos/apollo.png",    bg:"#EEF6FF",emoji:"💊"},
+  {id:"other",     label:"Other",     logo:null,                  bg:"#ECEFF1",emoji:"✏️"},
+];
+
+let state={
+  entries:[],members:[...DEFAULT_MEMBERS],startBal:START_BAL,
+  screen:"home",step:1,
+  selPlat:null,selWho:null,amount:"",otherName:"",
+  editingId:null,editAmount:"",editedBy:null,
+  showDeleteConfirm:false,deletingCashId:null,
+  cashAmount:"",cashAddedBy:null,cashExpanded:false,
+};
+
+const app2=initializeApp(firebaseConfig);
+const db=getDatabase(app2);
+const entriesRef=ref(db,"cashbox/entries");
+const configRef=ref(db,"cashbox/config");
+
+onValue(entriesRef,snap=>{
+  const val=snap.val();
+  state.entries=val?Object.values(val).sort((a,b)=>b.timestamp-a.timestamp):[];
+  render();
+});
+onValue(configRef,snap=>{
+  const val=snap.val();
+  if(val){
+    if(val.members)state.members=val.members;
+    if(val.startBal!==undefined)state.startBal=val.startBal;
+  }
+  render();
+});
+
+async function saveEntry(e){await set(ref(db,`cashbox/entries/${e.id}`),e);}
+async function deleteEntry(id){await remove(ref(db,`cashbox/entries/${id}`));}
+async function saveConfig(){await set(configRef,{members:state.members,startBal:state.startBal});}
+
+function startOfDay(ts){const d=new Date(ts);d.setHours(0,0,0,0);return d.getTime();}
+function fmt12(ts){return new Date(ts).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"});}
+function fmtFull(ts){return new Date(ts).toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"});}
+function fmtShort(ts){return new Date(ts).toLocaleDateString("en-IN",{day:"numeric",month:"short"})+" at "+fmt12(ts);}
+function fmtDay(ts){
+  const d=new Date(ts),t=new Date(),y=new Date(t);y.setDate(y.getDate()-1);
+  if(d.toDateString()===t.toDateString())return"Today";
+  if(d.toDateString()===y.toDateString())return"Yesterday";
+  return d.toLocaleDateString("en-IN",{weekday:"short",day:"numeric",month:"short"});
+}
+function inr(n){return"₹"+Number(n).toLocaleString("en-IN");}
+
+let toastTimer;
+function showToast(msg,err=false){
+  const el=document.getElementById("toast");if(!el)return;
+  el.textContent=msg;el.style.background=err?"#C0392B":"#2D5016";el.style.display="block";
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>{el.style.display="none";},2400);
+}
+
+function pImg(p,size=44){
+  if(p.logo)return`<img src="${p.logo}" alt="${p.label}" style="width:${size}px;height:${size}px;object-fit:contain;border-radius:${size/4}px" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span style="display:none;font-size:${size*.55}px">${p.emoji}</span>`;
+  return`<span style="font-size:${size*.55}px">${p.emoji}</span>`;
+}
+
+function render(){
+  const el=document.getElementById("app");
+  const now=Date.now();
+  const todayStart=startOfDay(now);
+  const expenses=state.entries.filter(e=>!e.type||e.type==="expense");
+  const cashAdded=state.entries.filter(e=>e.type==="cash_added");
+  const todayExp=expenses.filter(e=>e.timestamp>=todayStart);
+  const todayCash=cashAdded.filter(e=>e.timestamp>=todayStart);
+  const todaySpent=todayExp.reduce((s,e)=>s+e.amount,0);
+  const todayCashAmt=todayCash.reduce((s,e)=>s+e.amount,0);
+  const totalSpent=expenses.reduce((s,e)=>s+e.amount,0);
+  const totalAdded=cashAdded.reduce((s,e)=>s+e.amount,0);
+  const balance=state.startBal+totalAdded-totalSpent;
+
+  const grouped={};
+  state.entries.forEach(e=>{
+    const l=fmtDay(e.timestamp);
+    if(!grouped[l])grouped[l]={expenses:[],cashAdded:[],expTotal:0,cashTotal:0};
+    if(!e.type||e.type==="expense"){grouped[l].expenses.push(e);grouped[l].expTotal+=e.amount;}
+    else if(e.type==="cash_added"){grouped[l].cashAdded.push(e);grouped[l].cashTotal+=e.amount;}
+  });
+
+  function eRow(e,showEdit=false){
+    const p=PLATFORMS.find(x=>x.id===e.platform)||PLATFORMS[PLATFORMS.length-1];
+    const label=(e.platform==="other"&&e.platformLabel)?e.platformLabel:p.label;
+    const editLine=e.editedBy?`<div class="entry-edited">Edited by ${e.editedBy} · ${fmtShort(e.editedAt)}</div>`:"";
+    return`<div class="entry-row">
+      <div class="entry-icon" style="background:${p.bg}">${pImg(p,28)}</div>
+      <div class="entry-info"><div class="entry-name">${label}</div><div class="entry-meta">${e.paidBy} · ${fmt12(e.timestamp)}</div>${editLine}</div>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <div class="entry-amt">${inr(e.amount)}</div>
+        ${showEdit?`<button class="edit-btn tap" onclick="openEdit('${e.id}')">✏️</button>`:""}
+      </div>
+    </div>`;
+  }
+
+  function cRow(e,showDel=false){
+    return`<div class="cash-row">
+      <div class="cash-row-icon">💵</div>
+      <div class="cash-row-info"><div class="cash-row-label">Cash Added</div><div class="cash-row-meta">${e.addedBy} · ${fmt12(e.timestamp)}</div></div>
+      <div class="cash-row-right">
+        <div class="cash-row-amt">${inr(e.amount)}</div>
+        ${showDel?`<button class="del-cash-btn tap" onclick="askDelCash('${e.id}')">✕</button>`:""}
+      </div>
+    </div>`;
+  }
+
+  function dots(a){return[1,2,3].map(s=>`<div class="step-dot ${a>=s?"active":""}"></div>`).join("");}
+  function addHdr(onBack,stepNum){return`<div class="add-hdr"><button class="back-btn tap" onclick="${onBack}">← Back</button><div class="step-dots">${dots(stepNum)}</div><div class="time-pill">${fmt12(now)}</div></div>`;}
+
+  let html="";
+
+  if(state.showDeleteConfirm){
+    const e=state.entries.find(x=>x.id===(state.deletingCashId||state.editingId));
+    const isCash=!!state.deletingCashId;
+    const p=(!isCash&&e)?(PLATFORMS.find(x=>x.id===e.platform)||PLATFORMS[PLATFORMS.length-1]):null;
+    const label=isCash?"Cash Addition":(e?((e.platform==="other"&&e.platformLabel)?e.platformLabel:p?.label):"");
+    html+=`<div class="confirm-overlay"><div class="confirm-sheet">
+      <div class="confirm-sheet-title">Delete this entry?</div>
+      <div class="confirm-sheet-sub">${label}${e?" · "+inr(e.amount):""}<br>This cannot be undone and will update the balance.</div>
+      <div class="confirm-sheet-btns">
+        <button class="confirm-no tap" onclick="cancelDel()">No, keep it</button>
+        <button class="confirm-yes tap" onclick="confirmDel()">Yes, delete</button>
+      </div>
+    </div></div>`;
+  }
+
+  if(state.screen==="home"){
+    html+=`<div class="screen">
+      <div class="app-hdr">
+        <div><div class="app-name">Cash Box</div><div class="live-date">${fmtFull(now)}</div></div>
+        <button class="icon-btn tap" onclick="goScreen('settings')">⚙</button>
+      </div>
+      <div class="bal-card"><div class="bal-row">
+        <div>
+          <div class="bal-label">Cash Box Balance</div>
+          <div class="bal-amount">${inr(balance)}</div>
+          <div class="bal-sub">Started ${inr(state.startBal)} · Added ${inr(totalAdded)} · Spent ${inr(totalSpent)}</div>
+        </div>
+        <div class="today-box">
+          <div class="tb-lbl">Today</div>
+          <div class="tb-amt">${inr(todaySpent)}</div>
+          <div class="tb-sub">${todayExp.length} payment${todayExp.length!==1?"s":""}</div>
+        </div>
+      </div></div>
+      <div class="action-row">
+        <button class="log-btn tap" onclick="startAdd()"><span style="font-size:24px">+</span><span>Log a Payment</span></button>
+        <button class="cash-add-btn tap" onclick="goScreen('addCash')"><span style="font-size:20px">💵</span><span>Add Cash</span></button>
+      </div>
+      ${todayCash.length>0?`
+        <div class="cash-toggle tap" onclick="toggleCash()">
+          <div class="cash-toggle-left"><span>💵</span><span>Cash added today (${todayCash.length})</span></div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:13px;font-weight:700;color:#2D5016;font-family:'DM Mono',monospace">+${inr(todayCashAmt)}</span>
+            <span class="cash-arrow ${state.cashExpanded?"open":""}">▼</span>
+          </div>
+        </div>
+        ${state.cashExpanded?todayCash.map(e=>cRow(e,true)).join(""):""}
+      `:""}
+      <div class="sec-hdr">
+        <span class="sec-title">Today's Payments</span>
+        ${state.entries.length>0?`<button class="see-all" onclick="goScreen('log')">All history →</button>`:""}
+      </div>
+      ${todayExp.length===0?`<div class="empty">No payments logged today.<br><small>Resets automatically at midnight.</small></div>`:todayExp.map(e=>eRow(e)).join("")}
+    </div>`;
+  }
+  else if(state.screen==="add"&&state.step===1){
+    html+=`<div class="screen slide">
+      ${addHdr("goBack()",1)}
+      <div class="step-title">Which platform?</div>
+      <div class="plat-grid">
+        ${["amazon","zepto","blinkit","swiggy","bigbasket","zomato","flipkart","myntra","apollo","other"].map(id=>{
+          const p=PLATFORMS.find(x=>x.id===id);
+          const hide=["amazon","zepto","swiggy","zomato","blinkit","bigbasket"].includes(id);
+          return`<button class="plat-btn tap" onclick="selPlat('${p.id}')" style="background:${p.bg};border-color:${state.selPlat===p.id?"#2D5016":p.border||"#E5E7EB"}">
+            ${pImg(p,50)}<span class="plat-label" style="${hide?"display:none":""}">${p.label}</span>
+          </button>`;
+        }).join("")}
+      </div>
+    </div>`;
+  }
+  else if(state.screen==="add"&&state.step===2){
+    const p=PLATFORMS.find(x=>x.id===state.selPlat);
+    const rn=state.selPlat==="other"?state.otherName:p?.label;
+    html+=`<div class="screen slide">
+      ${addHdr("goBack()",2)}
+      <div class="recap">${pImg(p,20)}<span class="recap-name">${rn}</span></div>
+      <div class="step-title">How much? (₹)</div>
+      <div class="amt-disp">${state.amount||`<span class="amt-ph">0</span>`}</div>
+      <div class="numpad">${["1","2","3","4","5","6","7","8","9",".","0","⌫"].map(k=>`<button class="num-btn tap" onclick="numpad('${k}')">${k}</button>`).join("")}</div>
+      <button class="next-btn tap" onclick="toStep3()" ${!state.amount?"disabled":""}>Next →</button>
+    </div>`;
+  }
+  else if(state.screen==="add"&&state.step===3){
+    const p=PLATFORMS.find(x=>x.id===state.selPlat);
+    const rn=state.selPlat==="other"?state.otherName:p?.label;
+    html+=`<div class="screen slide">
+      ${addHdr("goBack()",3)}
+      <div class="recap">${pImg(p,20)}<span class="recap-name">${rn}</span><span class="recap-sep">·</span><span class="recap-amt">${inr(state.amount)}</span></div>
+      <div class="step-title">Who paid?</div>
+      <div class="mem-grid">${state.members.map(m=>`<button class="mem-btn tap ${state.selWho===m?"selected":""}" onclick="selWho('${m}')">${m}</button>`).join("")}</div>
+      <div class="auto-note">🕐 Time auto-logged as ${fmt12(now)}</div>
+      <button class="confirm-btn tap" onclick="confirmEntry()" ${!state.selWho?"disabled":""}>✓ Confirm & Log</button>
+    </div>`;
+  }
+  else if(state.screen==="otherInput"){
+    const suggs=["Nykaa","Meesho","JioMart","DMart","Local shop"];
+    html+=`<div class="screen slide">
+      <div class="add-hdr"><button class="back-btn tap" onclick="goOtherBack()">← Back</button><div class="step-dots">${dots(1)}</div><div class="time-pill">${fmt12(now)}</div></div>
+      <div class="step-title">Name the platform</div>
+      <div class="other-subtitle">A local shop, Nykaa, Meesho, JioMart — type anything.</div>
+      <input class="other-input" id="other-field" type="text" placeholder="e.g. Nykaa, JioMart, Kirana…" value="${state.otherName}" oninput="state.otherName=this.value;renderSugg()" onkeydown="if(event.key==='Enter'&&state.otherName.trim())confirmOther()" autofocus />
+      <div class="suggestions" id="sugg-box">${suggs.map(s=>`<button class="sugg-chip tap ${state.otherName===s?"active":""}" onclick="pickSugg('${s}')">${s}</button>`).join("")}</div>
+      <button class="next-btn tap" onclick="confirmOther()" style="margin-top:20px" ${!state.otherName.trim()?"disabled":""}>Next →</button>
+    </div>`;
+  }
+  else if(state.screen==="editEntry"){
+    const entry=state.entries.find(e=>e.id===state.editingId);
+    if(!entry){state.screen="log";render();return;}
+    const p=PLATFORMS.find(x=>x.id===entry.platform)||PLATFORMS[PLATFORMS.length-1];
+    const label=(entry.platform==="other"&&entry.platformLabel)?entry.platformLabel:p.label;
+    html+=`<div class="screen slide">
+      <div class="add-hdr"><button class="back-btn tap" onclick="goScreen('log')">← Back</button><span style="font-size:14px;font-weight:600;color:#1A1A1A">Edit Entry</span><div class="time-pill">${fmt12(now)}</div></div>
+      <div class="orig-card"><div class="orig-row">
+        <div class="orig-icon" style="background:${p.bg}">${pImg(p,22)}</div>
+        <div class="orig-info"><div class="orig-name">${label} · ${entry.paidBy}</div><div class="orig-meta">Originally logged ${fmtShort(entry.timestamp)}</div></div>
+        <div class="orig-amt">${inr(entry.amount)}</div>
+      </div></div>
+      <div class="step-title">New amount (₹)</div>
+      <div class="amt-disp">${state.editAmount||`<span class="amt-ph">0</span>`}</div>
+      <div class="numpad">${["1","2","3","4","5","6","7","8","9",".","0","⌫"].map(k=>`<button class="num-btn tap" onclick="editNum('${k}')">${k}</button>`).join("")}</div>
+      <div class="edited-by-lbl">Who is making this edit?</div>
+      <div class="mem-grid">${state.members.map(m=>`<button class="mem-btn tap ${state.editedBy===m?"selected":""}" onclick="setEditedBy('${m}')">${m}</button>`).join("")}</div>
+      <button class="save-edit-btn tap" onclick="saveEdit()" ${(!state.editAmount||!state.editedBy)?"disabled":""}>Save Changes</button>
+      <button class="delete-entry-btn tap" onclick="askDelEntry()">🗑 Delete Entry</button>
+    </div>`;
+  }
+  else if(state.screen==="addCash"){
+    html+=`<div class="screen slide">
+      <div class="add-hdr"><button class="back-btn tap" onclick="goScreen('home')">← Back</button><span style="font-size:14px;font-weight:600;color:#1A1A1A">Add Cash to Box</span><div class="time-pill">${fmt12(now)}</div></div>
+      <div class="cash-screen-note">💵 Use this when you top up the cash box. It updates the balance instantly.</div>
+      <div class="step-title">How much are you adding? (₹)</div>
+      <div class="amt-disp">${state.cashAmount||`<span class="amt-ph">0</span>`}</div>
+      <div class="numpad">${["1","2","3","4","5","6","7","8","9",".","0","⌫"].map(k=>`<button class="num-btn tap" onclick="cashNum('${k}')">${k}</button>`).join("")}</div>
+      <div class="edited-by-lbl">Who added the cash?</div>
+      <div class="mem-grid">${state.members.map(m=>`<button class="mem-btn tap ${state.cashAddedBy===m?"selected":""}" onclick="setCashBy('${m}')">${m}</button>`).join("")}</div>
+      <button class="confirm-btn tap" style="margin-top:8px" onclick="confirmCash()" ${(!state.cashAmount||!state.cashAddedBy)?"disabled":""}>✓ Confirm Cash Added</button>
+    </div>`;
+  }
+  else if(state.screen==="log"){
+    html+=`<div class="screen">
+      <div class="add-hdr"><button class="back-btn tap" onclick="goScreen('home')">← Back</button><span class="log-title">Full History</span></div>
+      ${Object.keys(grouped).length===0?`<div class="empty">No entries yet.</div>`:Object.entries(grouped).map(([date,{expenses:dExp,cashAdded:dCash,expTotal,cashTotal}])=>`
+        <div class="date-row">
+          <span class="date-lbl">${date}</span>
+          <span class="date-tot">${expTotal>0?`${inr(expTotal)} spent`:""}${cashTotal>0?` · +${inr(cashTotal)} added`:""}</span>
+        </div>
+        ${dCash.map(e=>cRow(e,true)).join("")}
+        ${dExp.map(e=>eRow(e,true)).join("")}
+      `).join("")}
+    </div>`;
+  }
+  else if(state.screen==="settings"){
+    html+=`<div class="screen">
+      <div class="add-hdr"><button class="back-btn tap" onclick="goScreen('home')">← Back</button><span class="log-title">Settings</span></div>
+      <div class="set-section">
+        <div class="set-lbl">Cash Box Starting Balance (₹)</div>
+        <div class="set-row">
+          <input class="set-input" id="bal-input" type="number" value="${state.startBal}" />
+          <button class="set-save tap" onclick="saveBalance()">Save</button>
+        </div>
+        <div style="font-size:12px;color:#9A8C7C;margin-top:8px;line-height:1.6">Set this to however much cash is currently in the box.</div>
+      </div>
+      <div class="set-section">
+        <div class="set-lbl">Family Members</div>
+        <div style="margin-bottom:10px">
+          ${state.members.map((m,i)=>{
+            const isDef=DEFAULT_MEMBERS.includes(m);
+            return`<div class="mem-tag"><span>${m}</span>${isDef?`<span style="font-size:10px;color:#B8A898;margin-left:2px">★</span>`:`<button class="rem-mem tap" onclick="removeMember(${i})">✕</button>`}</div>`;
+          }).join("")}
+        </div>
+        <div style="font-size:11px;color:#B8A898;margin-bottom:10px">★ Default members cannot be removed</div>
+        <div class="set-row">
+          <input class="set-input" id="new-member" type="text" placeholder="Add new member…" onkeydown="if(event.key==='Enter')addMember()" />
+          <button class="set-save tap" onclick="addMember()">Add</button>
+        </div>
+      </div>
+      <button class="danger-btn tap" onclick="clearAll()">🗑 Clear All Entries</button>
+      <div class="shared-note">📡 Data syncs live across all devices.<br>Share this URL with your family and bookmark it.</div>
+    </div>`;
+  }
+
+  el.innerHTML=html;
+  if(!document.getElementById("toast")){const t=document.createElement("div");t.id="toast";t.style.display="none";el.appendChild(t);}
+  if(state.screen==="otherInput"){const inp=document.getElementById("other-field");if(inp)setTimeout(()=>inp.focus(),80);}
+}
+
+window.state=state;
+window.goScreen=s=>{state.screen=s;render();};
+window.toggleCash=()=>{state.cashExpanded=!state.cashExpanded;render();};
+window.startAdd=()=>{state.screen="add";state.step=1;state.selPlat=null;state.selWho=null;state.amount="";state.otherName="";render();};
+window.goBack=()=>{if(state.step===1){state.screen="home";state.selPlat=null;state.otherName="";}else state.step--;render();};
+window.goOtherBack=()=>{state.screen="add";state.step=1;state.selPlat=null;state.otherName="";render();};
+window.selPlat=id=>{state.selPlat=id;if(id==="other")state.screen="otherInput";else state.step=2;render();};
+window.confirmOther=()=>{if(!state.otherName.trim())return;state.screen="add";state.step=2;render();};
+window.pickSugg=s=>{state.otherName=s;render();setTimeout(confirmOther,150);};
+window.renderSugg=()=>{
+  const box=document.getElementById("sugg-box");
+  const suggs=["Nykaa","Meesho","JioMart","DMart","Local shop"];
+  if(box)box.innerHTML=suggs.map(s=>`<button class="sugg-chip tap ${state.otherName===s?"active":""}" onclick="pickSugg('${s}')">${s}</button>`).join("");
+  const nb=document.querySelector(".next-btn");if(nb)nb.disabled=!state.otherName.trim();
+};
+window.numpad=k=>{if(k==="⌫")state.amount=state.amount.slice(0,-1);else if(k==="."&&state.amount.includes("."))return;else if(state.amount.length<7)state.amount+=k;render();};
+window.toStep3=()=>{if(state.amount){state.step=3;render();}};
+window.selWho=m=>{state.selWho=m;render();};
+window.confirmEntry=async()=>{
+  if(!state.selPlat||!state.amount||!state.selWho)return;
+  const entry={id:Date.now().toString(),type:"expense",platform:state.selPlat,platformLabel:state.selPlat==="other"?state.otherName.trim():null,amount:parseFloat(state.amount),paidBy:state.selWho,timestamp:Date.now()};
+  await saveEntry(entry);showToast(`${inr(entry.amount)} logged ✓`);
+  state.screen="home";state.step=1;state.selPlat=null;state.selWho=null;state.amount="";state.otherName="";render();
+};
+window.openEdit=id=>{
+  const e=state.entries.find(x=>x.id===id);if(!e)return;
+  state.editingId=id;state.editAmount=String(e.amount);state.editedBy=null;state.showDeleteConfirm=false;state.deletingCashId=null;state.screen="editEntry";render();
+};
+window.editNum=k=>{if(k==="⌫")state.editAmount=state.editAmount.slice(0,-1);else if(k==="."&&state.editAmount.includes("."))return;else if(state.editAmount.length<7)state.editAmount+=k;render();};
+window.setEditedBy=m=>{state.editedBy=m;render();};
+window.saveEdit=async()=>{
+  if(!state.editAmount||!state.editedBy)return;
+  const e=state.entries.find(x=>x.id===state.editingId);if(!e)return;
+  await saveEntry({...e,amount:parseFloat(state.editAmount),editedBy:state.editedBy,editedAt:Date.now()});
+  showToast("Entry updated ✓");state.screen="log";state.editingId=null;state.editAmount="";state.editedBy=null;render();
+};
+window.askDelEntry=()=>{state.showDeleteConfirm=true;state.deletingCashId=null;render();};
+window.askDelCash=id=>{state.showDeleteConfirm=true;state.deletingCashId=id;state.editingId=id;render();};
+window.cancelDel=()=>{state.showDeleteConfirm=false;state.deletingCashId=null;render();};
+window.confirmDel=async()=>{
+  const id=state.deletingCashId||state.editingId;
+  await deleteEntry(id);showToast("Entry deleted",true);
+  state.showDeleteConfirm=false;state.screen=state.deletingCashId?"home":"log";
+  state.deletingCashId=null;state.editingId=null;state.editAmount="";state.editedBy=null;render();
+};
+window.cashNum=k=>{if(k==="⌫")state.cashAmount=state.cashAmount.slice(0,-1);else if(k==="."&&state.cashAmount.includes("."))return;else if(state.cashAmount.length<7)state.cashAmount+=k;render();};
+window.setCashBy=m=>{state.cashAddedBy=m;render();};
+window.confirmCash=async()=>{
+  if(!state.cashAmount||!state.cashAddedBy)return;
+  const entry={id:Date.now().toString(),type:"cash_added",amount:parseFloat(state.cashAmount),addedBy:state.cashAddedBy,timestamp:Date.now()};
+  await saveEntry(entry);showToast(`${inr(entry.amount)} added to box ✓`);
+  state.screen="home";state.cashAmount="";state.cashAddedBy=null;render();
+};
+window.saveBalance=async()=>{
+  const v=parseInt(document.getElementById("bal-input")?.value);if(!v||isNaN(v))return;
+  state.startBal=v;await saveConfig();showToast("Balance updated");
+};
+window.addMember=async()=>{
+  const inp=document.getElementById("new-member");const name=inp?.value?.trim();
+  if(!name||state.members.includes(name))return;
+  state.members=[...state.members,name];await saveConfig();showToast(`${name} added`);
+};
+window.removeMember=async i=>{
+  if(DEFAULT_MEMBERS.includes(state.members[i]))return;
+  state.members=state.members.filter((_,j)=>j!==i);await saveConfig();render();
+};
+window.clearAll=async()=>{
+  if(!confirm("Clear ALL entries? This cannot be undone."))return;
+  await set(entriesRef,null);showToast("All entries cleared",true);
+};
+
+document.getElementById("loading").remove();
+render();
+setInterval(render,60000);
+</script>
+</body>
+</html>
