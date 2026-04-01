@@ -162,16 +162,10 @@ const START_BAL=0;
 const DEFAULT_MEMBERS=["Sneha"];
 
 const PLATFORMS=[
-  {id:"amazon",    label:"Amazon",    logo:"logos/amazon.png",    bg:"#FFF3E0",emoji:"📦"},
-  {id:"myntra",    label:"Myntra",    logo:"logos/myntra.png",    bg:"#FFF0F3",emoji:"👗"},
-  {id:"flipkart",  label:"Flipkart",  logo:"logos/flipkart.png",  bg:"#EEF4FF",emoji:"🛒"},
-  {id:"zepto",     label:"Zepto",     logo:"logos/zepto.png",     bg:"#F5EEFF",emoji:"⚡"},
-  {id:"blinkit",   label:"Blinkit",   logo:"logos/blinkit.png",   bg:"#FFFDE7",emoji:"🟡"},
-  {id:"swiggy",    label:"Swiggy",    logo:"logos/swiggy.png",    bg:"#FFF3EB",emoji:"🍜"},
-  {id:"bigbasket", label:"BigBasket", logo:"logos/bigbasket.png", bg:"#F2FAEB",emoji:"🧺"},
-  {id:"zomato",    label:"Zomato",    logo:"logos/zomato.png",    bg:"#FFF0F1",emoji:"🍽️"},
-  {id:"apollo",    label:"Apollo",    logo:"logos/apollo.png",    bg:"#EEF6FF",emoji:"💊"},
-  {id:"other",     label:"Other",     logo:null,                  bg:"#ECEFF1",emoji:"✏️"},
+  {id:"food",        label:"Food",        logo:null, bg:"#FFF3E0",emoji:"🍱"},
+  {id:"stock",       label:"Stock",       logo:null, bg:"#EEF4FF",emoji:"📦"},
+  {id:"stationery",  label:"Stationery",  logo:null, bg:"#F2FAEB",emoji:"✏️"},
+  {id:"other",       label:"Other",       logo:null, bg:"#ECEFF1",emoji:"📝"},
 ];
 
 let state={
@@ -339,13 +333,12 @@ function render(){
   else if(state.screen==="add"&&state.step===1){
     html+=`<div class="screen slide">
       ${addHdr("goBack()",1)}
-      <div class="step-title">Which platform?</div>
+      <div class="step-title">Which category?</div>
       <div class="plat-grid">
-        ${["amazon","zepto","blinkit","swiggy","bigbasket","zomato","flipkart","myntra","apollo","other"].map(id=>{
+        ${["food","stock","stationery","other"].map(id=>{
           const p=PLATFORMS.find(x=>x.id===id);
-          const hide=["amazon","zepto","swiggy","zomato","blinkit","bigbasket"].includes(id);
-          return`<button class="plat-btn tap" onclick="selPlat('${p.id}')" style="background:${p.bg};border-color:${state.selPlat===p.id?"#2D5016":p.border||"#E5E7EB"}">
-            ${pImg(p,50)}<span class="plat-label" style="${hide?"display:none":""}">${p.label}</span>
+          return`<button class="plat-btn tap" onclick="selPlat('${p.id}')" style="background:${p.bg};border-color:${state.selPlat===p.id?"#2D5016":"#E5E7EB"}">
+            <span style="font-size:44px">${p.emoji}</span><span class="plat-label">${p.label}</span>
           </button>`;
         }).join("")}
       </div>
